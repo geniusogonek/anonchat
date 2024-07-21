@@ -14,12 +14,3 @@ class Message(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     chat_id = Column(Integer)
     text = Column(String)
-
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
-    discord_id = Column(Integer)
-    companion = Column(String)
