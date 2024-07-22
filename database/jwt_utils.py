@@ -1,11 +1,7 @@
-import os
-
 import jwt
-from dotenv import load_dotenv
 from database.work import get_discord_id
 
-load_dotenv()
-JWT_SECRET = os.getenv("JWT_SECRET")
+from config import JWT_SECRET
 
 
 async def gen_jwt(id):
