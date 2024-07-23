@@ -5,9 +5,12 @@ from uuid import uuid1
 from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Response
 from fastapi.templating import Jinja2Templates
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from database import work, jwt_utils as jwt
 
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
 templates = Jinja2Templates("templates")
 
@@ -52,6 +55,7 @@ class AnonChatManager:
 
 
 @app.get("/")
+@limiter.limit("60/minute")
 async def main_page(request: Request, name: str = "DEFAULT"):
     uuid = uuid1()
 
@@ -64,6 +68,7 @@ async def main_page(request: Request, name: str = "DEFAULT"):
 
 
 @app.get("/chat")
+@limiter.limit("60/minute")
 async def chat(request: Request):
     return templates.TemplateResponse(
         request=request,
