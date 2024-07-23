@@ -3,7 +3,8 @@ import uvicorn
 
 from uuid import uuid1
 from typing import List
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Response
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -54,15 +55,21 @@ class AnonChatManager:
                 self.send(conn1, text)
 
 
-@app.get("/")
-@limiter.limit("60/minute")
-async def main_page(request: Request, name: str = "DEFAULT"):
-    uuid = uuid1()
+iplimiter = IpLimiter()
 
-    response = templates.TemplateResponse(
-        request=request,
-        name="index.html",
-    )
+
+@app.get("/")
+async def main_page(request: Request):
+    response = templates.TemplateResponse(request, "index.html")
+    print(request.client.host, sep="\n")
+    return response
+
+
+@app.get("/connect")
+@limiter.limit("60/minute")
+async def connect(request: Request, name: str = "DEFAULT"):
+    uuid = uuid1()
+    response = RedirectResponse("/")
     response.set_cookie("Authorization", jwt.gen_jwt(name=name, id=uuid))
     return response
 
@@ -92,7 +99,8 @@ async def websocket_connect(websocket: WebSocket):
 
 async def main():
     await work.init()
-    uvicorn.run(app)
+    server = uvicorn.Server(uvicorn.Config(app))
+    await server.serve()
 
 
 if __name__ == "__main__":
