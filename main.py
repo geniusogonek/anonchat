@@ -22,8 +22,9 @@ class AnonChatManager:
         self.waiting.append(websocket)
         if len(self.waiting) == 2:
             (self.send(conn, "companion is founded!") for conn in self.waiting)
-            self.active_connects.append(self.waiting.pop())
-    
+            self.active_connects.append(self.waiting)
+            self.waiting.clear()
+
     def disconnect(self, websocket):
         for index, (conn1, conn2) in enumerate(self.active_connects):
             if websocket == conn1:
@@ -41,12 +42,12 @@ class AnonChatManager:
     async def send(websocket: WebSocket, text: str):
         await websocket.send_text(text)
 
-    def get_companion(self, websocket):
+    def send_companion(self, websocket, text):
         for conn1, conn2 in self.active_connects:
             if websocket == conn1:
-                return conn2
+                self.send(conn2, text)
             if websocket == conn2:
-                return conn1
+                self.send(conn1, text)
 
 
 @app.get("/chat")
