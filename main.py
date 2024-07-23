@@ -1,10 +1,11 @@
 import asyncio
 import uvicorn
 
+from uuid import uuid1
 from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, Response
 from fastapi.templating import Jinja2Templates
-from database import work
+from database import work, jwt_utils as jwt
 
 
 app = FastAPI()
@@ -50,27 +51,38 @@ class AnonChatManager:
                 self.send(conn1, text)
 
 
+@app.get("/")
+async def main_page(request: Request, name: str = "DEFAULT"):
+    uuid = uuid1()
+
+    response = templates.TemplateResponse(
+        request=request,
+        name="index.html",
+    )
+    response.set_cookie("Authorization", jwt.gen_jwt(name=name, id=uuid))
+    return response
+
+
 @app.get("/chat")
 async def chat(request: Request):
     return templates.TemplateResponse(
         request=request,
-        name="index.html",
-        context={"is_auth": await work.check_auth(request)}
+        name="chat.html",
+        context=jwt.decode_jwt(request.cookies.get("Authorization"))
     )
 
-# TODO
-# ПЕРЕПИСАТЬ
-#@app.websocket("/ws")
-#async def websocket_connect(websocket: WebSocket, request: Request):
-#    await manager.connect(websocket)
-#    try:
-#        while True:
-#            data = await websocket.receive_text()
-#            await manager.send(f"СОБЕСЕДНИК: {data}", await work.get_companion(request))
-#            await manager.send(f"ВЫ: {data}", websocket)
-#    except WebSocketDisconnect:
-#        manager.disconnect(websocket)
-#        await manager.send("СОБЕСЕДНИК ПОКИНУЛ ЧАТ, ОБЩЕНИЕ ЗАВЕРШЕНО", await work.get_companion(request))
+manager = AnonChatManager()
+
+@app.websocket("/ws")
+async def websocket_connect(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send_companion(f"СОБЕСЕДНИК: {data}", websocket)
+            await manager.send(f"ВЫ: {data}", websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 
 async def main():
