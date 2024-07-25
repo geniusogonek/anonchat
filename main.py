@@ -55,8 +55,6 @@ class AnonChatManager:
                 self.send(conn1, text)
 
 
-iplimiter = IpLimiter()
-
 
 @app.get("/")
 async def main_page(request: Request):
