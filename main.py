@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from database import work
 from handlers import router as base_router
-from websockets import router as websockets_router
+from websockets_handler import router as websockets_router
 
 app = FastAPI()
 
