@@ -22,7 +22,7 @@ async def main_page(request: Request):
 
 
 @router.get("/connect")
-@limiter.limit("60/minute")
+@limiter.limit("100/minute")
 async def connect(request: Request, name: str = "DEFAULT"):
     uuid = uuid1()
     response = RedirectResponse("/")
@@ -31,7 +31,7 @@ async def connect(request: Request, name: str = "DEFAULT"):
 
 
 @router.get("/chat")
-@limiter.limit("60/minute")
+@limiter.limit("100/minute")
 async def chat(request: Request):
     return templates.TemplateResponse(
         request=request,
